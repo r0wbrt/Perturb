@@ -24,11 +24,9 @@
 #include <unordered_map>  
 #include <stdexcept>
 
+typedef Theron::Address Perturb::Actor::Address
 
-namespace Perturb
-{
-
-  class Actor : public Theron::Actor 
+  class Perturb::Actor : public Theron::Actor 
   {
     public:
     
@@ -49,6 +47,10 @@ namespace Perturb
     }
     protected:
     virtual void doWork() = 0;
+    Perturb::Actor::Address getFromAddress()
+    {
+      return this->WhoFrom;
+    }
     /**
       * 
       */
@@ -82,6 +84,7 @@ namespace Perturb
       try {
         std::unordered_map<int, void *>& map = this->InputMap.at(std::typeid(T));
         void (*f)(T&) = map.at(msg.InputID);
+        this->WhoFrom = from;
         *this.*f(msg.Value);
       } catch (const std::out_of_range& oor) {}
         this->doWork();
@@ -99,6 +102,18 @@ namespace Perturb
     template <typename T>    
     bool RemoveField(std::string Name);
 
+    template <typename T>
+    T setField(std::string Name, T& Value, Perturb::Actor::Address Address);
+    template <typename T>
+    void SetFieldMsgHandler(const Perturb::Actor::SetField<T>& msg, const Theron::Address from);
+
+    template <typename T>
+    T getField(std::string Name, Perturb::Actor::Address Address, void (*callback)(const T&, void * p), void * p);
+    template <typename T>
+    void GetFieldQueryMsgHandler(const Perturb::Actor::GetFieldQuery<T>& msg, const Theron::Address from);
+    template <typename T>
+    void GetFieldReplyMsgHandler(const Perturb::Actor::GetFieldReply<T>& msg, const Theron::Address from);
+
 
     template <typename T>
     void AddLinkMsgHandler(const Perturb::Actor::AddLink<T>& msg, const Theron::Address from);
@@ -107,8 +122,9 @@ namespace Perturb
     
 
   private:
+    Perturb::Actor::Address WhoFrom;
     std::unordered_map<std::type_index, std::unordered_map<int, void *> > InputMap;
-  };
 };
+
 
 #endif
