@@ -24,13 +24,18 @@
 #include <unordered_map>  
 #include <stdexcept>
 
-typedef Theron::Address Perturb::Actor::Address
+namespace Perturb 
+{
 
-  class Perturb::Actor : public Theron::Actor 
+
+
+  class Actor : public Theron::Actor 
   {
     public:
+    typedef Theron::Address Address;
     
     /*Created to prevent potential message type conflicts*/
+    template <typename T>
     class InputMsg
     {
       public:
@@ -42,8 +47,7 @@ typedef Theron::Address Perturb::Actor::Address
 
     Actor(Theron::Framework &framework) : Theron::Actor(framework)
     {
-      RegisterHandler(this, &perturb::actor::handleAddInputLink);
-      RegisterHandler(this, &perturb::actor::handleEvent<int>);
+      
     }
     protected:
     virtual void doWork() = 0;
@@ -58,7 +62,7 @@ typedef Theron::Address Perturb::Actor::Address
     bool AddInputHandler(void (*callback)(const T&), int InputID)
     {
       /*Insert Function into correct map by type*/
-      std::unordered_map<int, void *>& map = this->InputMap[std::typeid(T)];
+      std::unordered_map<int, void *>& map = this->InputMap[typeid(T)];
       map[InputID] = (void *)callback;  
 
       /*Register Handler for this type if not already done*/
@@ -72,17 +76,17 @@ typedef Theron::Address Perturb::Actor::Address
     bool RemoveInputHandler(int InputID)
     {
       try {
-        std::unordered_map<int, void *>& map = this->InputMap.at(std::typeid(T));
+        std::unordered_map<int, void *>& map = this->InputMap.at(typeid(T));
         map.erase(InputID); 
         return true;
       } catch (const std::out_of_range& oor) {return false; }
     }
 
     template <typename T>
-    void InputMsgHandler(const Perturb::Actor::InputMsg& msg,  const Theron::Address from)
+    void InputMsgHandler(const Perturb::Actor::InputMsg<T>& msg,  const Theron::Address from)
     {
       try {
-        std::unordered_map<int, void *>& map = this->InputMap.at(std::typeid(T));
+        std::unordered_map<int, void *>& map = this->InputMap.at(typeid(T));
         void (*f)(T&) = map.at(msg.InputID);
         this->WhoFrom = from;
         *this.*f(msg.Value);
@@ -127,4 +131,5 @@ typedef Theron::Address Perturb::Actor::Address
 };
 
 
+};
 #endif
