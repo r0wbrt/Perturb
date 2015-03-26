@@ -29,38 +29,27 @@ template <typename type>
 class AdderActor : public Perturb::Actor
 {
   public:
-  AdderActor(Theron::Framework &framework) : Actor(framework) 
+  AdderActor(Perturb::Domain& domain) : Actor(domain) 
   {
     this->a = 0;
     this->b = 0;
     AddInputHandler<type>(&Perturb::AdderActor<type>::InputA, 0);
     AddInputHandler<type>(&Perturb::AdderActor<type>::InputB, 1);
-    AddInputHandler<bool>(&Perturb::AdderActor<type>::ResetState, 0); //Reset Internal State
-    AddInputHandler<bool>(&Perturb::AdderActor<type>::Pause, 1); //Reject all messages
     AddOutput<type>(0);
   }
 
   private:
 
   int a, b;
-  bool pause = false;
   std::deque<type> bufferA;
   std::deque<type> bufferB;
 
-  void Pause(bool& pause)
+  void Reset()
   {
-    this->pause = pause;
-  }
-
-  void ResetState(bool& doReset)
-  {
-    if(doReset == true)
-    {
       this->a = 0;
       this->b = 0;
       this->bufferA.clear();
       this->bufferB.clear();
-    }
   }
   void InputA(type& A)
   {
