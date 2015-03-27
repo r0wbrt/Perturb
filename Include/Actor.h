@@ -43,12 +43,8 @@ namespace Perturb
     Actor(Perturb::App& App) : App(App), Theron::Actor(App.getFramework())
     {
       RegisterHandler(this, &Perturb::Actor::SyncMsgHandler);
-      this->setDomain(App.getDomain());   
-    }
-    void setDomain(Perturb::Domain domain)
-    {
-      this->DomainMasterAddress = domain.getAddress();  
-      this->Token = domain.getToken();
+      this->DomainMasterAddress = App.getAddress();  
+      this->Token = App.getToken();  
     }
     protected:
     bool toggleTokenCheck() 
@@ -134,12 +130,12 @@ namespace Perturb
       return true;
     }
     template <typename T>
-    bool WriteOutput(int OutputID, T& value)
+    bool WriteOutput(int OutputID, const T& value)
     {
       return this->WriteOutput<T>(OutputID, this->Token, value);
     }
     template <typename T>
-    bool WriteOutput(int OutputID, int Token, T& value)
+    bool WriteOutput(int OutputID, int Token, const T& value)
     {
       try {
         std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(typeid(T));
@@ -152,25 +148,6 @@ namespace Perturb
       } catch (const std::out_of_range& oor) {return false;}
       return true;   
     }
-
-/* Feature Freeze for version 0.1
-    template <typename T>
-    bool AddField(std::string Name, void (*setter)(const T&), T (*getter)());
-    template <typename T>    
-    bool RemoveField(std::string Name);
-
-    template <typename T>
-    T setField(std::string Name, T& Value, Perturb::Address Address);
-    template <typename T>
-    void SetFieldMsgHandler(const Perturb::Actor::SetField<T>& msg, const Theron::Address from);
-
-    template <typename T>
-    T getField(std::string Name, Perturb::Address Address, void (*callback)(const T&, void * p), void * p);
-    template <typename T>
-    void GetFieldQueryMsgHandler(const Perturb::Actor::GetFieldQuery<T>& msg, const Theron::Address from);
-    template <typename T>
-    void GetFieldReplyMsgHandler(const Perturb::Actor::GetFieldReply<T>& msg, const Theron::Address from);
-*/
 
     template <typename T>
     void AddLinkMsgHandler(const Perturb::ActorAddLink<T>& msg, const Theron::Address from)
@@ -200,23 +177,7 @@ namespace Perturb
         } catch (const std::out_of_range& oor) {}
     }
     virtual void TokenChanged(int Token) {};
-    void SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from)
-    {
-      
-      if(msg.ChangeDomainMasterAddress == true)
-        this->DomainMasterAddress = msg.NewDomainMasterAddress;
-      
-      if(msg.ChangeToken == true) {
-        this->Token = msg.Token; this->TokenChanged(msg.Token);
-      }
-  
-      if(msg.ResetState == true)
-        this->Reset();
-
-      this->Send(Perturb::ActorSyncReplyMessage(msg.Token, msg.ID), from);
-      
-      this->doWork();
-    }
+    void SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from);
       
 
   private:

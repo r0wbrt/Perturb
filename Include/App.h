@@ -40,32 +40,35 @@ namespace Perturb
       {
         this->Token = 0; 
       }
-      Perturb::Domain getDomain()
+      Perturb::Address getAddress()
       {
-        Perturb::Domain d(this->Receiver.GetAddress(), this->Token, this->Framework);
-        return d;
+        return this->Receiver.GetAddress();
+      }
+      int getToken()
+      {
+        return this->Token;
       }
       Theron::Framework& getFramework()
       {
         return this->Framework;
       }
       template <typename Type>
-      bool SendToInput(int InputID, Type& Value, Perturb::Address To)
+      bool SendToInput(int InputID, const Type& Value, Perturb::Address To)
       {
         return this->SendToInput<Type>(InputID, Value, To, this->Receiver.GetAddress(), this->Token);
       }
       template <typename Type>
-      bool SendToInput(int InputID, Type& Value, Perturb::Address To, int Token)
+      bool SendToInput(int InputID, const Type& Value, Perturb::Address To, int Token)
       {
         return this->SendToInput<Type>(InputID, Value, To, this->Receiver.GetAddress(), Token);
       }
       template <typename Type>
-      bool SendToInput(int InputID, Type& Value, Perturb::Address To, Perturb::Address From)
+      bool SendToInput(int InputID, const Type& Value, Perturb::Address To, Perturb::Address From)
       {
         return this->SendToInput<Type>(InputID, Value, To, From, this->Token);
       }
       template <typename Type>
-      bool SendToInput(int InputID, Type& Value, Perturb::Address To, Perturb::Address From, int Token)
+      bool SendToInput(int InputID, const Type& Value, Perturb::Address To, Perturb::Address From, int Token)
       {
         Perturb::ActorInputMsg<Type> msg(InputID, Value, Token);
         return this->Framework.Send(msg, From, To);
