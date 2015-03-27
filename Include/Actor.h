@@ -23,12 +23,11 @@
 #include <typeindex>      
 #include <unordered_map>  
 #include <stdexcept>
+#include <deque>
+#include <algorithm>
 
 namespace Perturb 
 {
-
-
-
   class Actor : public Theron::Actor 
   {
     public:
@@ -53,8 +52,6 @@ namespace Perturb
       public:
         bool ResetState = false;
         bool ChangeToken = false;
-        bool ChangeDomainCheck = false;
-        bool DomainCheck = false;
         bool ChangeDomainMasterAddress = false;
         Perturb::Actor::Address NewDomainMasterAddress;
         int Token = 0;
@@ -95,20 +92,33 @@ namespace Perturb
         int OutputId;
         int InputId;
         Perturb::Actor::Address Address;
-        AddLink(int OutputId, int InputId, Perturb::Actor::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
+        RemoveLink(int OutputId, int InputId, Perturb::Actor::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
         {}
     };
 
 
-    Actor(Perturb::Domain& domain) : Theron::Actor(domain.getFrameWork())
+    Actor(Perturb::App& App) : App(App), Theron::Actor(App.getFramework())
+    {
+      RegisterHandler(this, &Perturb::Actor::SyncMsgHandler);
+      this->setDomain(App.getDomain());   
+    }
+    void setDomain(Perturb::Domain& domain)
     {
       this->DomainMasterAddress = domain.getAddress();  
-      this->DomainToken = domain.getToken();
-      this->DomainMasterCheck = domain.isDomainMasterCheck();    
+      this->Token = domain.getToken();
     }
     protected:
+    bool toggleTokenCheck() 
+    {
+      this->TokenCheck = !this->TokenCheck;
+      return this->TokenCheck;
+    }
+    int getMessageToken()
+    {
+      return this->MessageToken;
+    }
     virtual void doWork() {};
-    virtual void reset() {};
+    virtual void Reset() {};
     Perturb::Actor::Address getFromAddress()
     {
       return this->WhoFrom;
@@ -143,12 +153,13 @@ namespace Perturb
     template <typename T>
     void InputMsgHandler(const Perturb::Actor::InputMsg<T>& msg,  const Theron::Address from)
     {
-      if(msg.Token != this->Token)
-        return void;
+      if(msg.Token != this->Token && this->TokenCheck == true)
+        return ;
       try {
         std::unordered_map<int, void *>& map = this->InputMap.at(typeid(T));
         void (*f)(T&) = map.at(msg.InputID);
         this->WhoFrom = from;
+        this->MessageToken = msg.Token;
         *this.*f(msg.Value);
       } catch (const std::out_of_range& oor) {}
         this->doWork();
@@ -159,7 +170,7 @@ namespace Perturb
     {
       std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap[typeid(T)];
       std::deque<std::pair<int, Perturb::Actor::Address> > que;
-      map[OutputId] = que;
+      map[OutputID] = que;
 
       if(IsHandlerRegistered(this, &Perturb::Actor::AddLinkMsgHandler<T>) != true)
         RegisterHandler(this, &Perturb::Actor::AddLinkMsgHandler<T>);
@@ -182,18 +193,24 @@ namespace Perturb
     template <typename T>
     bool WriteOutput(int OutputID, T& value)
     {
+      return this->WriteOutput<T>(OutputID, this->Token, value);
+    }
+    template <typename T>
+    bool WriteOutput(int OutputID, int Token, T& value)
+    {
       try {
         std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
-        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(OutputId);
+        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(OutputID);
         std::for_each(list.begin(), list.end(), [&] (const T& a) -> void 
           {
-            Perturb::Actor::InputMsg<T> msg(a.first, value, this->token);
+            Perturb::Actor::InputMsg<T> msg(a.first, value, Token);
             this->Send(msg, a.second);
           });
       } catch (const std::out_of_range& oor) {return false;}
       return true;   
     }
 
+/* Feature Freeze for version 0.1
     template <typename T>
     bool AddField(std::string Name, void (*setter)(const T&), T (*getter)());
     template <typename T>    
@@ -210,29 +227,45 @@ namespace Perturb
     void GetFieldQueryMsgHandler(const Perturb::Actor::GetFieldQuery<T>& msg, const Theron::Address from);
     template <typename T>
     void GetFieldReplyMsgHandler(const Perturb::Actor::GetFieldReply<T>& msg, const Theron::Address from);
-
+*/
 
     template <typename T>
-    void AddLinkMsgHandler(const Perturb::Actor::AddLink<T>& msg, const Theron::Address from);
+    void AddLinkMsgHandler(const Perturb::Actor::AddLink<T>& msg, const Theron::Address from)
+    {
+      try {
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(msg.OutputId);
+        list.push_back(std::pair<int, Perturb::Actor::Address>(msg.InputID, msg.Address));
+        } catch (const std::out_of_range& oor) {}
+    }
     template <typename T>
-    void RemoveLinkMsgHandler(const Perturb::Actor::RemoveLink<T>& msg, const Theron::Address from);
-    
+    void RemoveLinkMsgHandler(const Perturb::Actor::RemoveLink<T>& msg, const Theron::Address from)
+    {
+      try {
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(msg.OutputId);
+        auto it = std::find_if(list.begin(), list.end(), [&] (const std::pair<int, Perturb::Actor::Address> & v) -> bool
+        {
+          if(v.first == msg.InputID && v.second == msg.Address)
+            return true;
+          return false;        
+        });
+
+        if(*it.first == msg.InputID && *it.second == msg.Address)
+          list.erase(it);
+
+        } catch (const std::out_of_range& oor) {}
+    }
+    virtual void TokenChanged(int Token) {};
     void SyncMsgHandler(const Perturb::Actor::SyncRequestMessage& msg, const Theron::Address from)
     {
-      if(this->DomainMasterCheck==true)
-      {
-        if(this->DomainMasterAddress != from)
-          return void;
-      }
       
-      if(msg.ChangeDomainCheck == true)
-        this->DomainMasterCheck = msg.DomainCheck;
-
       if(msg.ChangeDomainMasterAddress == true)
         this->DomainMasterAddress = msg.NewDomainMasterAddress;
       
-      if(msg.ChangeToken == true)
-        this->Token = msg.Token;
+      if(msg.ChangeToken == true) {
+        this->Token = msg.Token; this->TokenChanged(msg.Token);
+      }
   
       if(msg.ResetState == true)
         this->Reset();
@@ -245,11 +278,13 @@ namespace Perturb
 
   private:
     Perturb::Actor::Address WhoFrom;
+    Perturb::App& App;
     std::unordered_map<std::type_index, std::unordered_map<int, void *> > InputMap;
     std::unordered_map<std::type_index, std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > > > OutputMap;
     int Token = 0;
+    int MessageToken = 0;
+    bool TokenCheck = true;
     Perturb::Actor::Address DomainMasterAddress;
-    bool DomainMasterCheck = false;
 };
 
 
