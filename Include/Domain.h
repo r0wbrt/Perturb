@@ -17,21 +17,22 @@
 #ifndef __PERTURB_INCLUDE_DOMAIN_H__
 #define __PERTURB_INCLUDE_DOMAIN_H__
 
-#include <Theron/Theron.h> 
+#include <Theron/Theron.h>
+#include <perturb.h>
 namespace Perturb
 {
 
   class Domain
   {
     private:
-      Perturb::Actor::Address Address;
+      Perturb::Address Address;
       int Token;
-      int Theron::Framework& Framework;
+      Theron::Framework& Framework;
     public:
-      Domain(Perurb::Actor::Address Address, int Token, Theron::Framework& Framework) :
+      Domain(Perturb::Address Address, int Token, Theron::Framework& Framework) :
       Address(Address), Token(Token), Framework(Framework)
       {}
-      Perturb::Actor::Address getAddress()
+      Perturb::Address getAddress()
       {
         return this->Address;
       }

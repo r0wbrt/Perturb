@@ -15,8 +15,10 @@
 */
 
 
-#ifndef __PERTURB_INCLUDE_SOURCE__H__
-#define __PERTURB_INCLUDE_SOURCE__H__
+#ifndef __PERTURB_INCLUDE_SOURCE_H__
+#define __PERTURB_INCLUDE_SOURCE_H__
+namespace Perturb
+{
 
 template <typename T>
 class Source
@@ -24,3 +26,6 @@ class Source
   public:
 
 };
+
+};
+#endif

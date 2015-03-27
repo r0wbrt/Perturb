@@ -15,22 +15,34 @@
 */
 
 #ifndef __PERTURB_INCLUDE_APP__H__
+#include <Theron/Theron.h> 
+#include <Domain.h>
+#include <perturb.h>
+#include <ActorInputMsg.h>
 #define __PERTURB_INCLUDE_APP__H__
 namespace Perturb
 {
   class App
   {
     private:
-      int Token;
-      Theron::Framework& Framework;
+      int Token = 0;
+      Theron::Framework Framework;
       Theron::Receiver Receiver;
       
       
     
     public:
-      Perturb::Actor::Domain getDomain()
+      App(int Token)
       {
-        Perturb::Actor::Domain d(this->Receiver.GetAddress(), this->Token, this->Framework);
+        this->Token = Token;
+      }
+      App()
+      {
+        this->Token = 0; 
+      }
+      Perturb::Domain getDomain()
+      {
+        Perturb::Domain d(this->Receiver.GetAddress(), this->Token, this->Framework);
         return d;
       }
       Theron::Framework& getFramework()
@@ -38,32 +50,27 @@ namespace Perturb
         return this->Framework;
       }
       template <typename Type>
-      bool SendToInput(int InputID, T& Value, Actor::Address To);
+      bool SendToInput(int InputID, Type& Value, Perturb::Address To)
+      {
+        return this->SendToInput<Type>(InputID, Value, To, this->Receiver.GetAddress(), this->Token);
+      }
       template <typename Type>
-      bool SendToInput(int InputID, T& Value, Actor::Address To, int Token);
+      bool SendToInput(int InputID, Type& Value, Perturb::Address To, int Token)
+      {
+        return this->SendToInput<Type>(InputID, Value, To, this->Receiver.GetAddress(), Token);
+      }
       template <typename Type>
-      bool SendToInput(int InputID, T& Value, Actor::Address To, Actor::Address From);
+      bool SendToInput(int InputID, Type& Value, Perturb::Address To, Perturb::Address From)
+      {
+        return this->SendToInput<Type>(InputID, Value, To, From, this->Token);
+      }
       template <typename Type>
-      bool SendToInput(int InputID, T& Value, Actor::Address To, Actor::Address From, int Token);
+      bool SendToInput(int InputID, Type& Value, Perturb::Address To, Perturb::Address From, int Token)
+      {
+        Perturb::ActorInputMsg<Type> msg(InputID, Value, Token);
+        return this->Framework.Send(msg, From, To);
+      }
   };
-
-  template <typename Type>
-  bool MakeLink(Actor& fromActor, Actor& toActor, int OutputID, int InputID);
-  temp  late <typename Type>
-  bool MakeLink(App& fromActor, Actor& toActor, int OutputID, int InputID);
-  template <typename Type>
-  bool MakeLink(Actor fromActor, App& toActor, int OutputID, int InputID);
-  template <typename Type>
-  bool MakeLink(App& fromActor, App& toActor, int OutputID, int InputID);
-  
-  template <typename Type>
-  bool BreakLink(Actor& fromActor, Actor& toActor, int OutputID, int InputID);
-  template <typename Type>
-  bool BreakLink(App& fromActor, Actor& toActor, int OutputID, int InputID);
-  template <typename Type>
-  bool BreakLink(Actor fromActor, App& toActor, int OutputID, int InputID);
-  template <typename Type>
-  bool BreakLink(App& fromActor, App& toActor, int OutputID, int InputID);
 
 
 };

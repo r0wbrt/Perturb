@@ -14,20 +14,30 @@
    limitations under the License.
 */
 
-#ifndef __PERTURB_INCLUDE_PERTURB__H
 
-#define __PERTURB_INCLUDE_PERTURB__H
+#ifndef __PERTURB_INCLUDE_ActorInputMsg__H__
+#define __PERTURB_INCLUDE_ActorInputMsg__H__
 
-
-namespace Perturb {
-
-#define PI 3.14159265359
-
-typedef Theron::Address Address;
+#include <Theron/Theron.h> 
+#include <perturb.h>
 
 
+namespace Perturb
+{
+    /*Created to prevent potential message type conflicts*/
+    template <typename T>
+    class ActorInputMsg
+    {
+      public:
+        int InputID;
+        int Token;
+        T Value;
+        ActorInputMsg(int InputID, T Value) : InputID(InputID), Value(Value), Token(0)
+        {}
+        ActorInputMsg(int InputID, T Value, int Token) : InputID(InputID), Value(Value), Token(Token)
+        {}
+    };
 
 };
-
 
 #endif

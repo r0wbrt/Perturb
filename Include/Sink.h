@@ -15,8 +15,11 @@
 */
 
 
-#ifndef __PERTURB_INCLUDE_SINK__H__
-#define __PERTURB_INCLUDE_SINK__H__
+#ifndef __PERTURB_INCLUDE_SINK_H__
+#define __PERTURB_INCLUDE_SINK_H__
+
+namespace Perturb
+{
 
 template <typename T>
 class Sink
@@ -27,3 +30,5 @@ class Sink
 
 
 };
+};
+#endif

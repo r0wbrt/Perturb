@@ -14,20 +14,21 @@
    limitations under the License.
 */
 
-#ifndef __PERTURB_INCLUDE_PERTURB__H
 
-#define __PERTURB_INCLUDE_PERTURB__H
+#ifndef __PERTURB_INCLUDE_ActorSyncReplyMessage__H__
+#define __PERTURB_INCLUDE_ActorSyncReplyMessage__H__
 
-
-namespace Perturb {
-
-#define PI 3.14159265359
-
-typedef Theron::Address Address;
-
-
-
-};
-
-
+#include <Theron/Theron.h> 
+#include <perturb.h>
+namespace Perturb
+{
+    class ActorSyncReplyMessage
+    {
+      public:
+        int Token;
+        int ID;
+      ActorSyncReplyMessage(int Token, int ID) : Token(Token), ID(ID)
+      {}
+    };
+};    
 #endif

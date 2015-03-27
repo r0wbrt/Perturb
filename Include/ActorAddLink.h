@@ -14,20 +14,27 @@
    limitations under the License.
 */
 
-#ifndef __PERTURB_INCLUDE_PERTURB__H
 
-#define __PERTURB_INCLUDE_PERTURB__H
+#ifndef __PERTURB_INCLUDE_ActorAddLink__H__
+#define __PERTURB_INCLUDE_ActorAddLink__H__
 
+#include <Theron/Theron.h> 
+#include <perturb.h>
 
-namespace Perturb {
-
-#define PI 3.14159265359
-
-typedef Theron::Address Address;
-
-
+namespace Perturb 
+{
+ 
+    template <typename T>    
+    class ActorAddLink
+    {
+      public:
+        int OutputId;
+        int InputId;
+        Perturb::Address Address;
+        ActorAddLink(int OutputId, int InputId, Perturb::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
+        {}
+    };
 
 };
-
 
 #endif

@@ -25,84 +25,27 @@
 #include <stdexcept>
 #include <deque>
 #include <algorithm>
+#include <App.h>
+#include <perturb.h>
+#include <ActorAddLink.h>
+#include <ActorInputMsg.h>
+#include <ActorRemoveLink.h>
+#include <ActorSyncReplyMessage.h>
+#include <ActorSyncRequestMessage.h>
+#include <Domain.h>
 
 namespace Perturb 
 {
   class Actor : public Theron::Actor 
   {
     public:
-    typedef Theron::Address Address;
-    
-    /*Created to prevent potential message type conflicts*/
-    template <typename T>
-    class InputMsg
-    {
-      public:
-        int InputID;
-        int Token;
-        T Value;
-        InputMsg(int InputID, T Value) : InputID(InputID), Value(Value), Token(0)
-        {}
-        InputMsg(int InputID, T Value, int Token) : InputID(InputID), Value(Value), Token(Token)
-        {}
-    };
-
-    class SyncRequestMessage
-    {
-      public:
-        bool ResetState = false;
-        bool ChangeToken = false;
-        bool ChangeDomainMasterAddress = false;
-        Perturb::Actor::Address NewDomainMasterAddress;
-        int Token = 0;
-        int ID;
-        SyncRequestMessage(bool ResetState, int ID) : ResetState(ResetState), ID(ID)
-        {}
-        SyncRequestMessage(int Token, bool ResetState) : ResetState(ResetState), ChangeToken(true), Token(Token), ID(ID)
-        {}
-        SyncRequestMessage(int ID) : ID(ID)
-        {}
-    };
-
-    class SyncReplyMessage
-    {
-      public:
-        int Token;
-        int ID;
-      SyncReplyMessage(int Token, int ID) : Token(Token), ID(ID)
-      {}
-    };
-    
-    template <typename T>    
-    class AddLink
-    {
-      public:
-        int OutputId;
-        int InputId;
-        Perturb::Actor::Address Address;
-        AddLink(int OutputId, int InputId, Perturb::Actor::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
-        {}
-    };
-
-
-    template <typename T>    
-    class RemoveLink
-    {
-      public:
-        int OutputId;
-        int InputId;
-        Perturb::Actor::Address Address;
-        RemoveLink(int OutputId, int InputId, Perturb::Actor::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
-        {}
-    };
-
 
     Actor(Perturb::App& App) : App(App), Theron::Actor(App.getFramework())
     {
       RegisterHandler(this, &Perturb::Actor::SyncMsgHandler);
       this->setDomain(App.getDomain());   
     }
-    void setDomain(Perturb::Domain& domain)
+    void setDomain(Perturb::Domain domain)
     {
       this->DomainMasterAddress = domain.getAddress();  
       this->Token = domain.getToken();
@@ -119,7 +62,7 @@ namespace Perturb
     }
     virtual void doWork() {};
     virtual void Reset() {};
-    Perturb::Actor::Address getFromAddress()
+    Perturb::Address getFromAddress()
     {
       return this->WhoFrom;
     }
@@ -151,7 +94,7 @@ namespace Perturb
     }
 
     template <typename T>
-    void InputMsgHandler(const Perturb::Actor::InputMsg<T>& msg,  const Theron::Address from)
+    void InputMsgHandler(const Perturb::ActorInputMsg<T>& msg,  const Theron::Address from)
     {
       if(msg.Token != this->Token && this->TokenCheck == true)
         return ;
@@ -168,8 +111,8 @@ namespace Perturb
     template <typename T>
     bool AddOutput(int OutputID)
     {
-      std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap[typeid(T)];
-      std::deque<std::pair<int, Perturb::Actor::Address> > que;
+      std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap[typeid(T)];
+      std::deque<std::pair<int, Perturb::Address> > que;
       map[OutputID] = que;
 
       if(IsHandlerRegistered(this, &Perturb::Actor::AddLinkMsgHandler<T>) != true)
@@ -184,7 +127,7 @@ namespace Perturb
     bool RemoveOutput(int OutputID)
     {
       try {
-        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(typeid(T));
         map.erase(OutputID);
       } catch (const std::out_of_range& oor) {}
 
@@ -199,11 +142,11 @@ namespace Perturb
     bool WriteOutput(int OutputID, int Token, T& value)
     {
       try {
-        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
-        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(OutputID);
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::deque<std::pair<int, Perturb::Address> >& list = map.at(OutputID);
         std::for_each(list.begin(), list.end(), [&] (const T& a) -> void 
           {
-            Perturb::Actor::InputMsg<T> msg(a.first, value, Token);
+            Perturb::ActorInputMsg<T> msg(a.first, value, Token);
             this->Send(msg, a.second);
           });
       } catch (const std::out_of_range& oor) {return false;}
@@ -217,12 +160,12 @@ namespace Perturb
     bool RemoveField(std::string Name);
 
     template <typename T>
-    T setField(std::string Name, T& Value, Perturb::Actor::Address Address);
+    T setField(std::string Name, T& Value, Perturb::Address Address);
     template <typename T>
     void SetFieldMsgHandler(const Perturb::Actor::SetField<T>& msg, const Theron::Address from);
 
     template <typename T>
-    T getField(std::string Name, Perturb::Actor::Address Address, void (*callback)(const T&, void * p), void * p);
+    T getField(std::string Name, Perturb::Address Address, void (*callback)(const T&, void * p), void * p);
     template <typename T>
     void GetFieldQueryMsgHandler(const Perturb::Actor::GetFieldQuery<T>& msg, const Theron::Address from);
     template <typename T>
@@ -230,21 +173,21 @@ namespace Perturb
 */
 
     template <typename T>
-    void AddLinkMsgHandler(const Perturb::Actor::AddLink<T>& msg, const Theron::Address from)
+    void AddLinkMsgHandler(const Perturb::ActorAddLink<T>& msg, const Theron::Address from)
     {
       try {
-        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
-        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(msg.OutputId);
-        list.push_back(std::pair<int, Perturb::Actor::Address>(msg.InputID, msg.Address));
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::deque<std::pair<int, Perturb::Address> >& list = map.at(msg.OutputId);
+        list.push_back(std::pair<int, Perturb::Address>(msg.InputID, msg.Address));
         } catch (const std::out_of_range& oor) {}
     }
     template <typename T>
-    void RemoveLinkMsgHandler(const Perturb::Actor::RemoveLink<T>& msg, const Theron::Address from)
+    void RemoveLinkMsgHandler(const Perturb::ActorRemoveLink<T>& msg, const Theron::Address from)
     {
       try {
-        std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > >& map = this->OutputMap.at(typeid(T));
-        std::deque<std::pair<int, Perturb::Actor::Address> >& list = map.at(msg.OutputId);
-        auto it = std::find_if(list.begin(), list.end(), [&] (const std::pair<int, Perturb::Actor::Address> & v) -> bool
+        std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(typeid(T));
+        std::deque<std::pair<int, Perturb::Address> >& list = map.at(msg.OutputId);
+        auto it = std::find_if(list.begin(), list.end(), [&] (const std::pair<int, Perturb::Address> & v) -> bool
         {
           if(v.first == msg.InputID && v.second == msg.Address)
             return true;
@@ -257,7 +200,7 @@ namespace Perturb
         } catch (const std::out_of_range& oor) {}
     }
     virtual void TokenChanged(int Token) {};
-    void SyncMsgHandler(const Perturb::Actor::SyncRequestMessage& msg, const Theron::Address from)
+    void SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from)
     {
       
       if(msg.ChangeDomainMasterAddress == true)
@@ -270,21 +213,21 @@ namespace Perturb
       if(msg.ResetState == true)
         this->Reset();
 
-      this->Send(Perturb::Actor::SyncReplyMessage(msg.Token, msg.ID), from);
+      this->Send(Perturb::ActorSyncReplyMessage(msg.Token, msg.ID), from);
       
       this->doWork();
     }
       
 
   private:
-    Perturb::Actor::Address WhoFrom;
+    Perturb::Address WhoFrom;
     Perturb::App& App;
     std::unordered_map<std::type_index, std::unordered_map<int, void *> > InputMap;
-    std::unordered_map<std::type_index, std::unordered_map<int, std::deque<std::pair<int, Perturb::Actor::Address> > > > OutputMap;
+    std::unordered_map<std::type_index, std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > > > OutputMap;
     int Token = 0;
     int MessageToken = 0;
     bool TokenCheck = true;
-    Perturb::Actor::Address DomainMasterAddress;
+    Perturb::Address DomainMasterAddress;
 };
 
 
