@@ -15,21 +15,24 @@
 */
 
 
-#ifndef __PERTURB_INCLUDE_ActorAddLink__H__
-#define __PERTURB_INCLUDE_ActorAddLink__H__
+#ifndef __PERTURB_INCLUDE_ActorInputMsg__H__
+#define __PERTURB_INCLUDE_ActorInputMsg__H__
 
 #include <Theron/Theron.h> 
 #include <perturb.h>
 
-namespace Perturb 
+
+namespace Perturb
 {
-	struct ActorAddLink
+	/*Created to prevent potential message type conflicts*/
+	template <typename T>
+	struct ActorInputMessage
 	{
-		int OutputID;
 		int InputID;
-		Perturb::Address Address;
-		std::type_index Type;
+		int Token;
+		T Value;
 	};
+
 };
 
 #endif

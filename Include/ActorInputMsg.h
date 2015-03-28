@@ -24,19 +24,14 @@
 
 namespace Perturb
 {
-    /*Created to prevent potential message type conflicts*/
-    template <typename T>
-    class ActorInputMsg
-    {
-      public:
-        int InputID;
-        int Token;
-        T Value;
-        ActorInputMsg(int InputID, T Value) : InputID(InputID), Value(Value), Token(0)
-        {}
-        ActorInputMsg(int InputID, T Value, int Token) : InputID(InputID), Value(Value), Token(Token)
-        {}
-    };
+	/*Created to prevent potential message type conflicts*/
+	template <typename T>
+	struct ActorInputMsg
+	{
+		int InputID;
+		int Token;
+		T Value;
+	};
 
 };
 

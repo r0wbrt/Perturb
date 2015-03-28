@@ -22,22 +22,13 @@
 #include <perturb.h>
 namespace Perturb
 {
-   class ActorSyncRequestMessage
-    {
-      public:
-        bool ResetState = false;
-        bool ChangeToken = false;
-        bool ChangeDomainMasterAddress = false;
-        Perturb::Address NewDomainMasterAddress;
-        int Token = 0;
-        int ID;
-        ActorSyncRequestMessage(bool ResetState, int ID) : ResetState(ResetState), ID(ID)
-        {}
-        ActorSyncRequestMessage(int Token, bool ResetState) : ResetState(ResetState), ChangeToken(true), Token(Token), ID(ID)
-        {}
-        ActorSyncRequestMessage(int ID) : ID(ID)
-        {}
-    };
+	struct ActorSyncRequestMessage
+	{
+		bool ResetState = false;
+		bool ChangeToken = false;
+		int Token = 0;
+		int ID;
+	};
 };
 #endif
    

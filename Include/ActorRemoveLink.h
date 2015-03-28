@@ -22,15 +22,12 @@
 #include <perturb.h>
 namespace Perturb
 {
-    template <typename T>    
-    class ActorRemoveLink
-    {
-      public:
-        int OutputId;
-        int InputId;
-        Perturb::Address Address;
-        ActorRemoveLink(int OutputId, int InputId, Perturb::Address Address) : OutputId(OutputId), InputId(InputId), Address(Address)
-        {}
-    };
+	struct ActorRemoveLink
+	{
+		int OutputID;
+		int InputID;
+		Perturb::Address Address;
+		std::type_index Type;
+	};
 }
 #endif

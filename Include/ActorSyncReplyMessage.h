@@ -22,13 +22,10 @@
 #include <perturb.h>
 namespace Perturb
 {
-    class ActorSyncReplyMessage
-    {
-      public:
-        int Token;
-        int ID;
-      ActorSyncReplyMessage(int Token, int ID) : Token(Token), ID(ID)
-      {}
-    };
+	struct ActorSyncReplyMessage
+	{
+		int Token;
+		int ID;
+	};
 };    
 #endif
