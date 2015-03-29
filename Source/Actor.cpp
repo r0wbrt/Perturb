@@ -18,11 +18,11 @@
 #include <iostream>
 namespace Perturb {
 
-void Actor::SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from)
+void Actor::SyncMessageHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from)
 {
 	if(msg.ChangeToken == true)
 	{
-		this->Token = msg.Token; 
+		this->token_ = msg.Token; 
 		this->TokenChanged(msg.Token);
 	}
 	
@@ -32,11 +32,11 @@ void Actor::SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Th
 	this->Send(Perturb::ActorSyncReplyMessage{msg.Token, msg.ID}, from);
 	this->doWork();
 }
-void Actor::AddLinkMsgHandler(const Perturb::ActorAddLink& msg, const Theron::Address from)
+void Actor::AddLinkMessageHandler(const Perturb::ActorAddLink& msg, const Theron::Address from)
 {
 	try 
 	{
-		std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(msg.Type);
+		std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->output_map_.at(msg.Type);
 		std::deque<std::pair<int, Perturb::Address> >& list = map.at(msg.OutputID);
 		list.push_back(std::pair<int, Perturb::Address>(msg.InputID, msg.Address));
 	} 
@@ -44,11 +44,11 @@ void Actor::AddLinkMsgHandler(const Perturb::ActorAddLink& msg, const Theron::Ad
 	{/*Do Nothing*/}
 }
 
-void Actor::RemoveLinkMsgHandler(const Perturb::ActorRemoveLink& msg, const Theron::Address from)
+void Actor::RemoveLinkMessageHandler(const Perturb::ActorRemoveLink& msg, const Theron::Address from)
 {
 	try
 	 {
-		std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(msg.Type);
+		std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->output_map_.at(msg.Type);
 		std::deque<std::pair<int, Perturb::Address> >& list = map.at(msg.OutputID);
 		auto it = std::find_if(list.begin(), list.end(), 
 		[&] (const std::pair<int, Perturb::Address> & v) -> bool
@@ -67,29 +67,29 @@ void Actor::RemoveLinkMsgHandler(const Perturb::ActorRemoveLink& msg, const Ther
 	{/*Do nothing*/}
 }
 
-Actor::Actor(Perturb::App& App) : App(App), Theron::Actor(App.getFramework())
+Actor::Actor(Perturb::App& App) : app_(App), Theron::Actor(App.getFramework())
 {
-	RegisterHandler(this, &Perturb::Actor::SyncMsgHandler);
-	RegisterHandler(this, &Perturb::Actor::AddLinkMsgHandler);
-	RegisterHandler(this, &Perturb::Actor::RemoveLinkMsgHandler);
+	RegisterHandler(this, &Perturb::Actor::SyncMessageHandler);
+	RegisterHandler(this, &Perturb::Actor::AddLinkMessageHandler);
+	RegisterHandler(this, &Perturb::Actor::RemoveLinkMessageHandler);
 }
 
 bool Actor::ToggleTokenCheck() 
 {
-	this->TokenCheck = !this->TokenCheck;
-	return this->TokenCheck;
+	this->token_check_ = !this->token_check_;
+	return this->token_check_;
 }
-int Actor::getMessageToken()
+int Actor::get_message_token()
 {
-	return this->MessageToken;
+	return this->message_token_;
 }
-int Actor::getMessageInputID()
+int Actor::get_message_input_id()
 {
-	return this->MessageInputID;
+	return this->message_input_id_;
 }
-Perturb::Address& Actor::getMessageFromAddress()
+Perturb::Address& Actor::get_message_from_address()
 {
-	return this->MessageFrom;
+	return this->message_from_address_;
 }
 
 };

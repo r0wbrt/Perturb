@@ -41,37 +41,41 @@ namespace Perturb {
 class Actor : public Theron::Actor 
 {
 	private:
-	Perturb::Address MessageFrom; 
-	int MessageInputID;
-	int MessageToken;
+	Perturb::Address message_from_address_; 
+	int message_input_id_;
+	int message_token_;
 
-	std::unordered_map<size_t, std::unordered_map<int,  std::function<void(const void *)> > > InputMap;
-	std::unordered_map<size_t, std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > > > OutputMap;
-	int Token = 0;
-	bool TokenCheck = true;    
+	std::unordered_map<size_t, std::unordered_map<int,  std::function<void(const void *)> > > input_map_;
+	std::unordered_map<size_t, std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > > > output_map_;
+	int token_ = 0;
+	bool token_check_ = true;    
 
   public:
 	explicit Actor(Perturb::App& App);
 	
   protected:
-	Perturb::App& App;
+	Perturb::App& app_;
+	
   virtual bool ToggleTokenCheck(); 
-  int getMessageToken();
-  int getMessageInputID();
+  
+  int get_message_token();
+  int get_message_input_id();
+  
   virtual void doWork() {};
   virtual void Reset() {};
-  Perturb::Address& getMessageFromAddress();
-  void AddLinkMsgHandler(const Perturb::ActorAddLink& msg, const Theron::Address from);
-  void RemoveLinkMsgHandler(const Perturb::ActorRemoveLink& msg, const Theron::Address from);
+  Perturb::Address& get_message_from_address();
+  
+  void AddLinkMessageHandler(const Perturb::ActorAddLink& msg, const Theron::Address from);
+  void RemoveLinkMessageHandler(const Perturb::ActorRemoveLink& msg, const Theron::Address from);
   virtual void TokenChanged(int Token) {};
-  void SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from);
+  void SyncMessageHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from);
 
   template <typename T, typename FunType>
   bool AddInputHandler(FunType * const container, void (FunType::*callback)(const T&), int InputID)
   {
 		static std::type_index Type = typeid(T);
     /*Insert Function into correct map by type hash code*/
-    std::unordered_map<int, std::function<void(const void *)> >& map = this->InputMap[Type.hash_code()];
+    std::unordered_map<int, std::function<void(const void *)> >& map = input_map_[Type.hash_code()];
     
     /*This lambda function uses closure to enable pretty callbacks*/
     map[InputID] = [container, callback] (const void * a) -> void 
@@ -81,8 +85,8 @@ class Actor : public Theron::Actor
 		};
 
     /*Register Handler for this type if not already done*/
-    if(IsHandlerRegistered(this, &Perturb::Actor::InputMsgHandler<T>) != true)
-      return RegisterHandler(this, &Perturb::Actor::InputMsgHandler<T>);
+    if(IsHandlerRegistered(this, &Perturb::Actor::InputMessageHandler<T>) != true)
+      return RegisterHandler(this, &Perturb::Actor::InputMessageHandler<T>);
 
     return true;
   }
@@ -92,24 +96,24 @@ class Actor : public Theron::Actor
   {
     static std::type_index Type = typeid(T);
     try {
-      std::unordered_map<int, std::function<void(const void *)> >& map = this->InputMap.at(Type.hash_code());
+      std::unordered_map<int, std::function<void(const void *)> >& map = this->input_map_.at(Type.hash_code());
       map.erase(InputID); 
       return true;
     } catch (const std::out_of_range& oor) {return false; }
   }
 
   template <typename T>
-  void InputMsgHandler(const Perturb::ActorInputMessage<T>& msg,  const Theron::Address from)
+  void InputMessageHandler(const Perturb::ActorInputMessage<T>& msg,  const Theron::Address from)
   {
     static std::type_index Type = typeid(T);
-    if(msg.Token != this->Token && this->TokenCheck == true)
+    if(msg.Token != this->token_ && this->token_check_ == true)
       return ;
     try {
-      std::unordered_map<int,  std::function<void(const void *)> >& map = this->InputMap.at(Type.hash_code());
+      std::unordered_map<int,  std::function<void(const void *)> >& map = this->input_map_.at(Type.hash_code());
       std::function<void(const void *)> F = map.at(msg.InputID);
-      this->MessageFrom = from;
-      this->MessageToken = msg.Token;
-      this->MessageInputID = msg.InputID;
+      this->message_from_address_ = from;
+      this->message_token_ = msg.Token;
+      this->message_input_id_ = msg.InputID;
       F((const void *)&msg.Value);
     } catch (const std::out_of_range& oor) {}
       this->doWork();
@@ -119,7 +123,7 @@ class Actor : public Theron::Actor
   bool AddOutput(int OutputID)
   {
     static std::type_index Type = typeid(T);
-    std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap[Type.hash_code()];
+    std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->output_map_[Type.hash_code()];
     std::deque<std::pair<int, Perturb::Address> > que;
     map[OutputID] = que;
 
@@ -131,7 +135,7 @@ class Actor : public Theron::Actor
   {
     static std::type_index Type = typeid(T);
     try {
-      std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(Type.hash_code());
+      std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->output_map_.at(Type.hash_code());
       map.erase(OutputID);
     } catch (const std::out_of_range& oor) {}
 
@@ -141,7 +145,7 @@ class Actor : public Theron::Actor
   template <typename T>
   bool WriteToOutput(const T& value, int OutputID)
   {
-    return this->WriteToOutput<T>(value, OutputID, this->Token);
+    return this->WriteToOutput<T>(value, OutputID, token_);
   }
 
   template <typename T>
@@ -149,7 +153,7 @@ class Actor : public Theron::Actor
   {
     static std::type_index Type = typeid(T);
     try {
-      std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->OutputMap.at(Type.hash_code());
+      std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > >& map = this->output_map_.at(Type.hash_code());
       std::deque<std::pair<int, Perturb::Address> >& list = map.at(OutputID);
       std::for_each(list.begin(), list.end(), [&] (const std::pair<int, Perturb::Address>& a) -> void 
         {

@@ -29,37 +29,37 @@ namespace Perturb { namespace Parts {
 	class BinaryOperation : public Perturb::Actor
 	{
 		private:
-			std::function<T3(T1&,T2&)> Operator;
-			std::deque<T1> bufferInputA;
-			std::deque<T2> bufferInputB;
+			std::function<T3(T1&,T2&)> operator_function_;
+			std::deque<T1> buffer_input_a_;
+			std::deque<T2> buffer_input_b_;
 		protected:
 			void InputA(const T1& a)
 			{
-				this->bufferInputA.push_back(a);
+				this->buffer_input_a_.push_back(a);
 			}
 			void InputB(const T2& b)
 			{
-				this->bufferInputB.push_back(b);
+				this->buffer_input_b_.push_back(b);
 			}
 			void doWork()
 			{
-				while(this->bufferInputA.empty()!=true && this->bufferInputB.empty()!= true)
+				while(this->buffer_input_a_.empty()!=true && this->buffer_input_b_.empty()!= true)
 				{
-					T1 a = this->bufferInputA.front();
-					T2 b = this->bufferInputB.front();
-					T3 c = this->Operator(a,b);
+					T1 a = this->buffer_input_a_.front();
+					T2 b = this->buffer_input_b_.front();
+					T3 c = this->operator_function_(a,b);
 					this->WriteToOutput(c, 0);
-					this->bufferInputA.pop_front();
-					this->bufferInputB.pop_front();
+					this->buffer_input_a_.pop_front();
+					this->buffer_input_b_.pop_front();
 				}
 			}
 			void Reset()
 			{
-				this->bufferInputA.clear();
-				this->bufferInputB.clear();
+				this->buffer_input_a_.clear();
+				this->buffer_input_b_.clear();
 			}
 		public:
-			BinaryOperation(std::function<T3(T1&,T2&)> Operator, Perturb::App& App) : Actor(App), Operator(Operator)
+			BinaryOperation(std::function<T3(T1&,T2&)> operator_function, Perturb::App& App) : Actor(App), operator_function_(operator_function)
 			{
 				this->AddInputHandler(this, &Perturb::Parts::BinaryOperation<T1, T2, T3>::InputA, 0);
 				this->AddInputHandler(this, &Perturb::Parts::BinaryOperation<T1, T2, T3>::InputB, 1);
@@ -84,7 +84,7 @@ namespace Perturb { namespace Parts {
 	class Subtractor : public BinaryOperation<T,T,T>
 	{
 		public:
-			Adder(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
+			Subtractor(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
 				{
 					return a - b;
 				}, App)
@@ -96,7 +96,7 @@ namespace Perturb { namespace Parts {
 	class Mixer : public BinaryOperation<T,T,T>
 	{
 		public:
-			Adder(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
+			Mixer(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
 				{
 					return a * b;
 				}, App)

@@ -20,12 +20,20 @@
 namespace Perturb
 {
 
-template <typename T>
-class Source
-{
-  public:
-
-};
+	class Source
+	{
+		private:
+		int token_;
+		Theron::Receiver receiver_;
+		std::unordered_map<size_t, std::unordered_map<int, std::deque<std::pair<int, Perturb::Address> > > > output_map_;
+  	public:
+  	template <typename T>
+  	bool WriteToOutput(const T& value);
+  	template <typename T>
+  	bool WriteToOutput(const T& value, int token);
+  	Perturb::Address GetAddress();
+  	
+	};
 
 };
 #endif
