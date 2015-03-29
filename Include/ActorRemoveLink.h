@@ -20,6 +20,7 @@
 
 #include <Theron/Theron.h> 
 #include <perturb.h>
+#include <typeindex>
 namespace Perturb
 {
 	struct ActorRemoveLink
@@ -27,7 +28,7 @@ namespace Perturb
 		int OutputID;
 		int InputID;
 		Perturb::Address Address;
-		std::type_index Type;
+		size_t Type;
 	};
 }
 #endif

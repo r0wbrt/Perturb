@@ -15,14 +15,15 @@
 */
 
 #include <Actor.h>
-
+#include <iostream>
 namespace Perturb {
 
 void Actor::SyncMsgHandler(const Perturb::ActorSyncRequestMessage& msg, const Theron::Address from)
 {
 	if(msg.ChangeToken == true)
 	{
-		this->Token = msg.Token; this->TokenChanged(msg.Token);
+		this->Token = msg.Token; 
+		this->TokenChanged(msg.Token);
 	}
 	
 	if(msg.ResetState == true)
@@ -73,7 +74,7 @@ Actor::Actor(Perturb::App& App) : App(App), Theron::Actor(App.getFramework())
 	RegisterHandler(this, &Perturb::Actor::RemoveLinkMsgHandler);
 }
 
-bool Actor::toggleTokenCheck() 
+bool Actor::ToggleTokenCheck() 
 {
 	this->TokenCheck = !this->TokenCheck;
 	return this->TokenCheck;
@@ -86,7 +87,7 @@ int Actor::getMessageInputID()
 {
 	return this->MessageInputID;
 }
-Perturb::Address Actor::getMessageFromAddress()
+Perturb::Address& Actor::getMessageFromAddress()
 {
 	return this->MessageFrom;
 }
