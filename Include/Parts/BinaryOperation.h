@@ -78,7 +78,32 @@ namespace Perturb { namespace Parts {
 				}, App)
 		{	
 		}
+	};
+	
+	template <typename T>
+	class Subtractor : public BinaryOperation<T,T,T>
+	{
+		public:
+			Adder(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
+				{
+					return a - b;
+				}, App)
+		{	
+		}
 	};	
+	
+	template <typename T>
+	class Mixer : public BinaryOperation<T,T,T>
+	{
+		public:
+			Adder(Perturb::App& App) : BinaryOperation<T,T,T>::BinaryOperation([] (const T& a, const T& b) -> T 
+				{
+					return a * b;
+				}, App)
+		{	
+		}
+	};	
+
 
 
 		
