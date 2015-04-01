@@ -30,11 +30,12 @@ class Part
   virtual void Reset();
   virtual void TokenChanged();
   virtual bool DoWork();
-  virtual void Intialize(); 
-  Interface& PartInterface();
+  virtual bool Intialize() = 0; 
+  PartInterface& Interface();
   void Lock();
   void UnLock();
   size_t GetFromOutput();
+  Perturb::Application& App();
 
   private:
   /*Need friend class declarations becuase these methods below are 
@@ -82,6 +83,7 @@ class Part
   void __internal_set_output_source_hash(size_t output_source_hash);
   
   PartInterface * interface_;
+  Perturb::Application application_;
   Perturb::Address message_address_;
   int check_token_;
   size_t input_hash_;

@@ -8,11 +8,11 @@
 namespace Perturb { namespace Parts {
 
 /**
- * This part writes directly to the standard out. Has an optional pretty name that
- * can be set. Uses a mutex to serialize access to standard out.
+ * This part sends messages to the log. Has an optional pretty name that
+ * can be set.
  */
 template <typename T>
-class Logger : public Perturb::Actor
+class Logger : public Perturb::Part
 {
 	private:	
 		std::string pretty_name_; /*The name identifying this logger*/
@@ -40,31 +40,20 @@ class Logger : public Perturb::Actor
 		}
 	public:
 	
-		/**
-		 * Constructor, name defaults to 'No Name.'
-		 * 
-		 * @param App The application context this part executes in.
-		 */
-		Logger(Perturb::App& App) : Perturb::Actor(App), pretty_name_("No Name")
-		{
-			AddInputHandler(&Perturb::Parts::Logger<T>::WriteOutput, 0);
-			this->ToggleTokenCheck();
-			AddOutput<T>(0);
-		}
-
-		/**
-		 *	Constructor, this one sets the pretty name of the logger.
-		 * 
-		 * @param pretty_name The pretty name used to make this logger identifiable 
-		 * on the command line.
-		 * @param App The application context that this part executes in. 
-		 */
-		Logger( std::string pretty_name, Perturb::App& App) : Perturb::Actor(App), pretty_name_(pretty_name) 
-		{
-			AddInputHandler(this, &Perturb::Parts::Logger<T>::WriteOutput, 0);
-			this->ToggleTokenCheck();
-			AddOutput<T>(0);
-		}
+	  
+	
+	  bool Intialize()
+	  {
+	    this->CheckTokens(false);
+	    this->PartInterface().AddInputHandler(this, Perturb::Parts::Logger::WriteOutput<T>, "Log In");
+	    this->PartInterface().AddOutput<T>("Log Out");
+	  }
+	  
+	  template <typename T>
+	  static * Logger Create_Logger()
+	  {
+	    return new Logger<T>();
+	  }
 	};
 
 };};
