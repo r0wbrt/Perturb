@@ -34,6 +34,7 @@
 #include <unordered_map>
 #include <typeinfo>
 #include <algorithm>
+#include <string>
 
 namespace Perturb {
 
@@ -111,7 +112,13 @@ class PartInterface : public Theron::Actor
     return true;
   }
   
-  
+  /**
+   * Removes an input handler by name. Does not notify other parts that this 
+   * input handler has been deleted.
+   *
+   * @param name The name of the output to remove.
+   * @return True on success.
+   */
   template <typename T>
   bool RemoveInputHandler(const std::string& name)
   {
@@ -155,6 +162,8 @@ class PartInterface : public Theron::Actor
         this->input_map_.erase(type_hash);
       }
     }
+    
+    return true;
   }
   
   /**
@@ -312,41 +321,54 @@ class PartInterface : public Theron::Actor
       message.output_hash = hash;
       message.payload = value;
       message.token = token;
-      this->Send(message, entry.second);
+      if(this->Send(message, entry.second)!=true)
+        this->LogError("Could not send message to subscribed input.");
     });
     
     return true;
   }
-
-
-  template <typename T, typename C>
-  void AddGetter(C * owner, T (C::*callback)(), const std::string& name);
-  template <typename T, typename C>
-  void AddSetter(C * owner, void (C::*callback)(const T& value), const std::string& name);
   
+  /**
+   * Sends an value to an input at the specified address. Used for replies and
+   * other syncronous comunication applications.
+   *
+   * @param value The value to send.
+   * @param input_name_hash The input to deliver the message to.
+   * @param token The security context token. In general this should be set using
+   * Part->Token(). Otherwise the message may be rejected.
+   * @param address The address to send the message to.
+   * @return True when the message is delivered.
+   */
   template <typename T>
-  void RemoveGetter(const std::string& name);
-  template <typename T>
-  void RemoveSetter(const std::string& name);
+  bool SendToInput(const T& value, const NameHash input_name_hash, const ContextToken token, Perturb::Address address)
+  {
+    static TypeHash type_hash = typeid(T).hash_code();
+    static NameHash from_hash = this->HashName("SYSTEM_NO_OUTPUT"); /*Reserved word*/
+    PartInterfaceInputMessage<T> message;
+    message.type = type_hash;
+    message.input_hash = input_name_hash;
+    message.output_hash = from_hash; /*This does not origniate from a input*/
+    message.payload = value;
+    message.token = token;
+    return this->Send(message, address);
+  }
   
-  void Log(const std::string& string);
-  void LogError(const std::string& string);
-  
-  void Initialize(Part * part, const Perturb::Address log_address);
-  
+  /**
+   *
+   */  
+  void Log(const std::string& out_message);
+  void LogError(const std::string& out_message);
+  bool Initialize(Part * part, const Perturb::Address log_address);
   static NameHash HashName(std::string name);
 
   protected:
   
   void GetListMessageHandler(const PartInterfaceGetListMessage& message, const Perturb::Address from);
+  void LinkMessageHandler(const PartInterfaceLinkMessage& message, const Perturb::Address from);
+  void SyncMessageHandler(const PartInterfaceSyncMessage& message, const Perturb::Address from);
+  
   template <typename T>
-  void InputMessageHandler(const PartInterfaceInputMessage<T>& message, const Theron::Address from);
-  void MakeLinkMessageHandler(const PartInterfaceMakeLinkMessage& message, const Theron::Address from);
-  void RemoveLinkMessageHandler(const PartInterfaceRemoveLinkMessage& message, const Theron::Address from);
-  void GetFieldMessageHandler(const PartInterfaceGetFieldMessage& message, const Theron::Address from);
-  template <typename T>
-  void SetFieldMessageHandler(const PartInterfaceSetFieldMessage<T>& message, const Theron::Address from);
-  void SyncMessageHandler(const PartInterfaceSyncMessage& message, const Theron::Address from);
+  void InputMessageHandler(const PartInterfaceInputMessage<T>& message, const Perturb::Address from);
 };
 
 };

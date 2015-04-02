@@ -2,69 +2,113 @@
 
 namespace Perturb
 {
-  void Part::set_message_token(int token)
-  {
-    this->message_token_ = token;
-  }
-  int Part::get_message_token()
+
+  ContextToken Part::InputToken()
   {
     return this->message_token_;
   }
-  void Part::set_input_hash(size_t hash)
+  
+  void Part::__internal_set_message_token(ContextToken token)
   {
-    this->input_hash_ = hash;
+    this->message_token_ = token;
   }
-  size_t Part::get_input_hash()
+  
+  NameHash Part::InputHash()
   {
     return this->input_hash_;
   }
-  void Part::set_message_address(Perturb::Address address)
+  
+  void Part::__internal_set_input_hash(NameHash hash)
   {
-    this->message_address_ = address;
+    this->input_hash_ = hash;
   }
-  void Part::get_message_address()
+  
+  Perturb::Address Part::FromAddress()
   {
     return this->message_address_;
   }
-  bool Part::is_checking_token()
+  
+  void Part::__internal_set_message_address(Perturb::Address address)
+  {
+    this->message_address_ = address;
+  }
+
+  void Part::CheckTokens(bool value)
+  {
+    this->checking_token_ = value;
+  }
+   
+  bool Part::__internal_is_checking_token()
   {
     return this->checking_token_;
   }
-  bool Part::toggle_checking_token()
-  {
-    return this->checking_token_ = !this->checking_token_;
-  }
-  void Part::set_interface(PartInterface * interface)
-  {
-    this->interface_ = interface;
-  }
-  PartInterface * Part::get_interface()
-  {
-    return this->interface_;
-  }
-  int Part::set_check_token(int token)
-  {
-    this->check_token_ = token;
-  }
-  int Part::get_check_token()
+  
+  ContextToken Part::Token()
   {
     return this->check_token_;
   }
-  void Part::mark_in_use()
+  
+  void Part::__internal_set_check_token(ContextToken token)
   {
-    this->in_use_ = true; 
-  }
-  void Part::mark_not_in_use()
-  {
-    this->in_use_ = false;
-  }
-  bool Part::is_in_use()
-  {
-    return this->in_use_;
+    this->check_token_ = token;
   }
   
-  virtual void Part::Reset() {}
-  virtual void Part::TokenChanged() {}
-  virtual bool Part::DoWork() {}
-  virtual void Part::Intialize() {}
+  ContextToken Part::__internal_get_check_token()
+  {
+    return this->check_token_;
+  }
+  
+  
+  void Part::Reset() 
+  {/*NOOP*/}
+  
+  void Part::TokenChanged() 
+  {/*NOOP*/}
+  
+  bool Part::DoWork()
+  {/*NOOP*/}
+  
+  PartInterface& Part::Interface()
+  {
+    return *this->interface_;
+  }
+  
+  Perturb::Application& Part::App()
+  {
+    return *this->application_;
+  }
+  
+  void Part::Lock()
+  {
+    this->__internal_mark_in_use();
+  }
+  void Part::UnLock()
+  {
+    this->__internal_mark_not_in_use();
+  }
+  void Part::__internal_mark_in_use()
+  {
+    while(this->lock_.test_and_set(std::memory_order_acquire) == true)
+    {/*Spin Lock*/}
+  }
+  void Part::__internal_mark_not_in_use()
+  {
+    this->lock_.clear(std::memory_order_release);
+  }
+  
+  void Part::__internal_intialize(PartInterface * interface)
+  {
+    this->interface_ = interface;
+  }
+  
+  NameHash Part::GetFromOutput()
+  {
+    return this->output_source_hash_;
+  }
+  void Part::__internal_set_output_source_hash(NameHash output_source_hash)
+  {
+    this->output_source_hash_ = output_source_hash;
+  }
+  
+
 };
