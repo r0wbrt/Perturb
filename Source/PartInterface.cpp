@@ -62,10 +62,8 @@ void PartInterface::GetListMessageHandler(const PartInterfaceGetListMessage& mes
   
   if(message.reply == true)
   {
-    this->part_->__internal_mark_in_use();
     this->part_->__internal_set_message_address(from);
     this->part_->ListReply(message.list, message.id);
-    this->part_->__internal_mark_not_in_use();
     return ;
   }
   
@@ -113,7 +111,6 @@ void PartInterface::LinkMessageHandler(const PartInterfaceLinkMessage& message, 
 }
 void PartInterface::SyncMessageHandler(const PartInterfaceSyncMessage& message, const Perturb::Address from)
 {
-  this->part_->__internal_mark_in_use();
   
   this->part_->__internal_set_message_address(from);
   
@@ -139,7 +136,35 @@ void PartInterface::SyncMessageHandler(const PartInterfaceSyncMessage& message, 
       this->LogError("Failed to issue sync reply to sender. Could render system into an undefined state.");
   }
   
-  this->part_->__internal_mark_not_in_use();
+}
+
+int PartInterface::IssueReset(Perturb::Address address)
+{
+  PartInterfaceSyncMessage message;
+  message.reply = false;
+  message.update_token = false;
+  message.reset = true;
+  int id = this->sync_id_++;
+  message.id = id;    
+  if(this->Send(message, address) != true)
+    return -1;
+    
+  return id;
+}
+
+int PartInterface::IssueNewToken(int Token, Perturb::Address address)
+{
+  PartInterfaceSyncMessage message;
+  message.reply = false;
+  message.update_token = true;
+  message.token = Token;
+  message.reset = false;
+  int id = this->sync_id_++;
+  message.id = id;    
+  if(this->Send(message, address) != true)
+    return -1;
+    
+  return id;
 }
 
 };

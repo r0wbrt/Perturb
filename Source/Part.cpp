@@ -77,26 +77,8 @@ namespace Perturb
   {
     return *this->application_;
   }
-  
-  void Part::Lock()
-  {
-    this->__internal_mark_in_use();
-  }
-  void Part::UnLock()
-  {
-    this->__internal_mark_not_in_use();
-  }
-  void Part::__internal_mark_in_use()
-  {
-    while(this->lock_.test_and_set(std::memory_order_acquire) == true)
-    {/*Spin Lock*/}
-  }
-  void Part::__internal_mark_not_in_use()
-  {
-    this->lock_.clear(std::memory_order_release);
-  }
-  
-  void Part::__internal_intialize(PartInterface * interface)
+
+  void Part::__internal_initialize(PartInterface * interface)
   {
     this->interface_ = interface;
   }

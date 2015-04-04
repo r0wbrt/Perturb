@@ -38,6 +38,10 @@ class Logger : public Perturb::Part
 			
 			WriteToOutput<T>(val, 0, this->get_message_token());
 		}
+		void SetName(const std::string& name)
+		{
+		  this->pretty_name_ = name;
+		}
 	public:
 	
 	  
@@ -45,7 +49,8 @@ class Logger : public Perturb::Part
 	  bool Intialize()
 	  {
 	    this->CheckTokens(false);
-	    this->PartInterface().AddInputHandler(this, Perturb::Parts::Logger::WriteOutput<T>, "Log In");
+	    this->PartInterface().AddInputHandler(this, &Perturb::Parts::Logger::WriteOutput<T>, "Log In");
+	    this->PartInterface().AddInputHandler(this, &Perturb::Parts::Logger::SetName, "Set Pretty Name");
 	    this->PartInterface().AddOutput<T>("Log Out");
 	  }
 	  

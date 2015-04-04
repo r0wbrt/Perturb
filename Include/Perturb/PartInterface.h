@@ -24,6 +24,9 @@
  * Creator: Robert Taylor
  * Contributors: Robert Taylor 
  * Modified in Version: 0.2.00
+ * TODO Version 0.3.0 - Rebuild this class as a thin template interface over
+ * the core actor code. Also make use of polymorphic objects to encapuslate
+ * the dynamic callback registering.
  */
 
 #include <Theron/Theron.h>
@@ -35,6 +38,7 @@
 #include <typeinfo>
 #include <algorithm>
 #include <string>
+#include <functional>
 
 namespace Perturb {
 
@@ -70,6 +74,7 @@ class PartInterface : public Theron::Actor
   std::deque<IOEntry> output_name_list_;
   /**The address where all error messages and console output should be sent to*/
   Perturb::Address log_output_address_;  
+  int sync_id_ = 0;
   
   public:
   PartInterface(Theron::Framework & framework);
@@ -360,7 +365,11 @@ class PartInterface : public Theron::Actor
   void LogError(const std::string& out_message);
   bool Initialize(Part * part, const Perturb::Address log_address);
   static NameHash HashName(std::string name);
-
+  
+  /*TODO Finish these two functions for version 2.0.0*/
+  int IssueReset(Perturb::Address); 
+  int IssueNewToken(int Token, Perturb::Address); 
+ 
   protected:
   
   void GetListMessageHandler(const PartInterfaceGetListMessage& message, const Perturb::Address from);
@@ -368,7 +377,39 @@ class PartInterface : public Theron::Actor
   void SyncMessageHandler(const PartInterfaceSyncMessage& message, const Perturb::Address from);
   
   template <typename T>
-  void InputMessageHandler(const PartInterfaceInputMessage<T>& message, const Perturb::Address from);
+  void InputMessageHandler(const PartInterfaceInputMessage<T>& message, const Perturb::Address from)
+  {
+    static TypeHash type_hash = typeid(T).hash_code();
+    if(message.type_hash != type_hash)
+    {
+      this->LogError("Message routed to wrong input handler.");
+      return ;
+    }
+    
+    if((message.token!=this->part_->Token()) && (this->part_-> __internal_is_checking_token() == true))
+       return ;
+    
+    if(this->input_map_.count(type_hash)!=1)
+    {
+      this->LogError("Message sent to non-existent input.");
+      return ;
+    }
+    
+    if(this->input_map_[type_hash].count(message.input_hash) != 1)
+    {
+      this->LogError("Message sent to non-existent input.");
+      return ;
+    }
+    
+    FunctionPointer& f = this->input_map_[type_hash][message.input_hash];
+    Part * part = this->part_;
+    part->__internal_set_message_token(message.token);
+    part->__internal_set_input_hash(message.input_hash);
+    part->__internal_set_message_address(from);
+    part->__internal_set_output_source_hash(message.output_hash);
+    f((void *)&message.payload);
+    part->DoWork();
+  }
 };
 
 };
