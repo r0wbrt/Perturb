@@ -49,7 +49,7 @@ bool PartInterface::Initialize(Part * part, const Perturb::Address log_address)
     return false;
 }
 
-static NameHash HashName(std::string name)
+NameHash PartInterface::HashName(std::string name)
 {
   std::hash<std::string> hash_fn;
   return hash_fn(name);

@@ -91,6 +91,14 @@ namespace Perturb
   {
     this->output_source_hash_ = output_source_hash;
   }
+  std::string Part::__internal_get_part_name()
+  {
+    return this->part_name_;
+  }
+  void Part::__internal_set_part_name(const std::string& name)
+  {
+    this->part_name_ = name;
+  }
   
 
 };

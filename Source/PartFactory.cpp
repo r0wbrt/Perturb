@@ -18,7 +18,7 @@
 
 namespace Perturb {
   std::atomic_flag PartFactory::part_list_lock_ = ATOMIC_FLAG_INIT;
-
+  std::map<std::string, PartCreatorBase *> PartFactory::part_list_;
   Part * PartFactory::CreatePart(const std::string& name)
   {
     if(PartFactory::part_list_.count(name) == 0)
