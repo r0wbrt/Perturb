@@ -27,6 +27,15 @@
  * TODO Version 0.3.0 - Rebuild this class as a thin template interface over
  * the core actor code. Also make use of polymorphic objects to encapuslate
  * the dynamic callback registering.
+ *
+ * Before Version 0.2.0 Release, these issues must be fixed.
+ *
+ * TODO Simplify the method of message input passing. Allow for an input to 
+ * receive many types with ease. Eg. int, float, double etc.
+ * TODO Fix duplication of code in Message sending, fix WriteToOutput Api
+ * TODO Need a way to get globally unique tokens.
+ * 
+ *
  */
 
 #include <Theron/Theron.h>
@@ -54,7 +63,11 @@ class Part;
 class PartInterface : public Theron::Actor
 {
   private:
+  
   /*These typedefs are used to help reduce the number of > when writing code*/
+  
+  /*TODO, cut down on the number of typdefs*/
+  /*TODO, replace with polymorphic object*/
   typedef std::function<const void(void *)> FunctionPointer;
   typedef std::pair<NameHash, Perturb::Address> ToEntry;
   typedef std::deque<ToEntry> ToList;
@@ -62,6 +75,9 @@ class PartInterface : public Theron::Actor
   typedef std::unordered_map<NameHash, ToList> OutputMap;
   typedef std::pair<std::string, TypeHash> IOEntry;
   
+  
+  /*TODO, eliminate multidimensional lists and arrays*/
+    
   /**A pointer to the part_ object the interface provides services to*/
   Part * part_; 
   /**A multidimensional map used to store input handlers by name and type*/
@@ -74,6 +90,7 @@ class PartInterface : public Theron::Actor
   std::deque<IOEntry> output_name_list_;
   /**The address where all error messages and console output should be sent to*/
   Perturb::Address log_output_address_;  
+  
   int sync_id_ = 0;
   
   public:
@@ -92,12 +109,16 @@ class PartInterface : public Theron::Actor
   {
     static TypeHash type_hash = typeid(T).hash_code();
     
+    /*TODO Most of this code should be in a seperate function. Currently this
+     method produces code bloat. Future revisions should make this function
+     a template function around a more fixed way of doing things.*/
+    
     /*Register Handler for this type if not already done*/
     if(IsHandlerRegistered(this, &Perturb::PartInterface::InputMessageHandler<T>) != true)
     {
       if(RegisterHandler(this, &Perturb::PartInterface::InputMessageHandler<T>) != true)
       {
-        this->LogError("Register input failed in AddInputHandler.");
+        this->LogError("Failed to AddInputHandler.");
         return false; /*No point in continuing if we don't have an handler to 
                           receive a message*/
       }
@@ -127,10 +148,17 @@ class PartInterface : public Theron::Actor
   template <typename T>
   bool RemoveInputHandler(const std::string& name)
   {
+  
+    /*TODO Most of this code should be in a seperate function. Currently this
+     method produces code bloat. Future revisions should make this function
+     a template function around a more fixed way of doing things.*/
+     
     static TypeHash type_hash = typeid(T).hash_code();
     /*Check if this type exist in the input_map_*/
     if(this->input_map_.count(type_hash)!=1)
       return false;
+   
+    /*TODO binding to a local variable would make this function more legible*/
     
     /*Ensure this input name exist*/
     if(this->input_map_[type_hash].count(this->HashName(name))!=1)
@@ -181,6 +209,12 @@ class PartInterface : public Theron::Actor
   template <typename T>
   bool AddOutput(const std::string& name)
   {
+  
+      /*TODO Most of this code should be in a seperate function. Currently this
+     method produces code bloat. Future revisions should make this function
+     a template function around a more fixed way of doing things.*/
+     
+     
     static TypeHash type_hash = typeid(T).hash_code();
     ToList list;
     /*Create a new output list and insert into the output map with a
@@ -241,6 +275,9 @@ class PartInterface : public Theron::Actor
     
     return true;
   }
+  
+  /*TODO, Fix this api before release of version 0.2.0, take avdvantage of 
+   default values*/
   
     /**
    * An overloaded version of WriteToOutput(value, Name Hash, Token).
@@ -333,6 +370,9 @@ class PartInterface : public Theron::Actor
     return true;
   }
   
+  
+  /*TODO, rework this function API to work with the previous to reduce code
+   duplication*/
   /**
    * Sends an value to an input at the specified address. Used for replies and
    * other syncronous comunication applications.
