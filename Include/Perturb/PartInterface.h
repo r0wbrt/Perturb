@@ -357,22 +357,13 @@ class PartInterface : public Theron::Actor
     std::for_each(list.begin(), list.end(), 
     [&value, hash, token, this, type] (const ToEntry& entry)
     {
-      PartInterfaceInputMessage<T> message;
-      message.type = type;
-      message.input_hash = entry.first;
-      message.output_hash = hash;
-      message.payload = value;
-      message.token = token;
-      if(this->Send(message, entry.second)!=true)
+      if(this->SendToInput<T>(value, hash, entry.first, token, entry.second)!=true)
         this->LogError("Could not send message to subscribed input.");
     });
     
     return true;
   }
   
-  
-  /*TODO, rework this function API to work with the previous to reduce code
-   duplication*/
   /**
    * Sends an value to an input at the specified address. Used for replies and
    * other syncronous comunication applications.
@@ -385,14 +376,15 @@ class PartInterface : public Theron::Actor
    * @return True when the message is delivered.
    */
   template <typename T>
-  bool SendToInput(const T& value, const NameHash input_name_hash, const ContextToken token, Perturb::Address address)
+  bool SendToInput(const T& value, const NameHash output_name_hash,
+                   const NameHash input_name_hash, const ContextToken token, 
+                   Perturb::Address address)
   {
     static TypeHash type_hash = typeid(T).hash_code();
-    static NameHash from_hash = this->HashName("SYSTEM_NO_OUTPUT"); /*Reserved word*/
     PartInterfaceInputMessage<T> message;
     message.type = type_hash;
     message.input_hash = input_name_hash;
-    message.output_hash = from_hash; /*This does not origniate from a input*/
+    message.output_hash = output_name_hash;
     message.payload = value;
     message.token = token;
     return this->Send(message, address);
@@ -405,6 +397,44 @@ class PartInterface : public Theron::Actor
   void LogError(const std::string& out_message);
   bool Initialize(Part * part, const Perturb::Address log_address);
   static NameHash HashName(std::string name);
+  
+  int Quit(); /*Destructs this actor*/
+  int Die(); /*Calling this will kill the entire application*/
+  int Die(const std::string message);
+  
+  int LinkOutput(Perturb::Address sink_address, NameHash name_hash, 
+                    TypeHash type);
+  
+  int LinkInput(Perturb::Address source_address, NameHash source_hash, 
+                  TypeHash type);
+                  
+  int UnLinkOutput(Perturb::Address sink_address, NameHash name_hash, 
+                    TypeHash type);
+  
+  int UnLinkInput(Perturb::Address source_address, NameHash source_hash, 
+                  TypeHash type);
+
+
+                  
+ 
+  bool MakeLink(Perturb::Address source_part, Perturb::Address sink_part, 
+        const std::string& output_name, 
+        const std::string& input_name, TypeHash type);
+        
+  bool MakeLink(Perturb::Address source_part, Perturb::Address sink_part, 
+            const NameHash output_hash, 
+            const NameHash input_hash, TypeHash type);
+            
+            
+  bool DeleteLink(Perturb::Address source_part, Perturb::Address sink_part, 
+              const std::string& output_name, 
+              const std::string& input_name,  TypeHash type);
+              
+  bool DeleteLink(Perturb::Address source_part, Perturb::Address sink_part, 
+            const NameHash output_hash, 
+            const NameHash input_hash, TypeHash type);
+ 
+                  
   
   /*TODO Finish these two functions for version 2.0.0*/
   int IssueReset(Perturb::Address); 

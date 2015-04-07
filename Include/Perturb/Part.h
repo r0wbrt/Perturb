@@ -105,8 +105,8 @@ class Part
   ContextToken __internal_get_check_token();
   void __internal_initialize(PartInterface * interface);
   void __internal_set_output_source_hash(NameHash output_source_hash);
-  std::string __internal_get_part_name();
-  void __internal_set_part_name(const std::string& name);
+  void __internal_set_application(Perturb::Application * app);
+  
   
   PartInterface * interface_;
   Perturb::Application * application_;
@@ -116,7 +116,6 @@ class Part
   ContextToken message_token_;
   bool checking_token_;
   NameHash output_source_hash_;
-  std::string part_name_;
   
 
 };

@@ -16,6 +16,8 @@
 #include <Perturb/PartFactory.h>
 #include <Perturb/Part.h>
 
+/*TODO fix API to match new ApplicationController class*/
+
 namespace Perturb {
   std::atomic_flag PartFactory::part_list_lock_ = ATOMIC_FLAG_INIT;
   std::map<std::string, PartCreatorBase *> PartFactory::part_list_;

@@ -21,6 +21,7 @@
 #include <Perturb/PartMessages.h>
 #include <Perturb/PartInterface.h>
 #include <map>
+#include <atomic>
 
 namespace Perturb {
 
@@ -30,54 +31,32 @@ class Application
 {
   private:
   Theron::Framework framework_;
-  std::map<Perturb::Address, std::pair<Part *, PartInterface *> > part_map_;
   Theron::Receiver receiver_;
+  std::map<Perturb::Address, std::pair<Part *, PartInterface *> > part_map_;
   std::atomic_flag lock_ = ATOMIC_FLAG_INIT;
-  ContextToken default_token_ = 0;
+  static std::atomic_flag stdout_lock_;
+  static std::atomic_flag stderror_lock_;
+  bool has_quit_ = true;
+  Part * application_controller_;
+  PartInterface * application_controller_interface_;
+  
+  void QuitCatcher(const PartInterfaceInputMessage<int>& message, Perturb::Address address);
+  void OutputCatcher(const PartInterfaceInputMessage<std::string>& message, const Perturb::Address address);
+  void Lock();
+  void Unlock();
+  
   public:
-  /*Creates a new part*/
-  Perturb::Address CreatePart(const std::string& name);
-  /*Destroys a part*/
-  bool DestroyPart(const Perturb::Address address);
-  /*Executes the ApplicationController of the app*/
-  bool Execute(ApplicationController * controller, void * p);
-  /*Creates a que with type T to catch replies from the AppController*/
-  template <typename T>
-  bool CreateQue();
-  /*Waits for a message from the ApplicationController*/
-  bool Wait();
+  Application();
+  Perturb::Address AddPart(Part * part, Part * parent);
+  Part * RemovePart(Perturb::Address address);
   
-  bool Link(Perturb::Address source_part, Perturb::Address sink_part, 
-        const std::string& output_name, 
-        const std::string& input_name, TypeHash type);
-        
-  bool Link(Perturb::Address source_part, Perturb::Address sink_part, 
-            const NameHash output_hash, 
-            const NameHash input_hash, TypeHash type);
-            
-  bool UnLink(Perturb::Address source_part, Perturb::Address sink_part, 
-              const std::string& output_name, 
-              const std::string& input_name,  TypeHash type);
-              
-  bool UnLink(Perturb::Address source_part, Perturb::Address sink_part, 
-            const NameHash output_hash, 
-            const NameHash input_hash, TypeHash type);
-  
-  template <typename T>
-  bool ReadQue(T& value); 
-  
-  /*Has the application controller intiated a shutdown?*/
+  Perturb::Address Execute(ApplicationController * controller, void * p);
+  /*Has the application controller initiated a shutdown?*/
   bool HasQuit();
-  /*Sends value with type n to the application controller*/
-  template <typename T>
-  bool Send(T& n);
   /*Informs the application controller that is should shutdown*/
   bool RequestQuit();
   /*Returns after the Application Controller has shutdown Application*/
   bool WaitForQuit();
-  
-  void SetDefaultToken(ContextToken token);
-  ContextToken GetDefaultToken();
 };
 
 };

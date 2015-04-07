@@ -91,7 +91,11 @@ namespace Perturb
   {
     this->output_source_hash_ = output_source_hash;
   }
-  std::string Part::__internal_get_part_name()
+  void Part::__internal_set_application(Perturb::Application * app)
+  {
+    this->application_ = app;
+  }
+ /* std::string Part::__internal_get_part_name()
   {
     return this->part_name_;
   }
@@ -100,5 +104,5 @@ namespace Perturb
     this->part_name_ = name;
   }
   
-
+*/
 };
