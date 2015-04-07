@@ -26,7 +26,7 @@ void Application::RequestExit()
 {
   this->Exit();
 }
-void Application::Entry(void * p)
+void Application::Entry(const void *& p)
 {
   this->Main(p);
 }
