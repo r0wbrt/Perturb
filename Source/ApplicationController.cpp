@@ -1,11 +1,13 @@
 #include <Perturb/ApplicationController.h>
-
+#include <Perturb/PartInterface.h>
+#include <Perturb/Application.h>
 namespace Perturb {
 
-void Initialize()
+bool ApplicationController::__internal_controller_init(void *p)
 {
   this->Interface().AddInputHandler(this, &ApplicationController::RequestExitRouter, "ApplicationController::RequestExit");
   this->Interface().AddInputHandler(this, &ApplicationController::Entry, "ApplicationController::Main");
+  this->pointer_ = p;
   return true;
 }
 void ApplicationController::Exit()
@@ -22,13 +24,14 @@ void ApplicationController::RequestExitRouter(const int& k)
     
   this->RequestExit();
 }
-void Application::RequestExit()
+void ApplicationController::RequestExit()
 {
   this->Exit();
 }
-void Application::Entry(const void *& p)
+
+void ApplicationController::Entry(const int& p)
 {
-  this->Main(p);
+  this->Main(this->pointer_);
 }
 
 

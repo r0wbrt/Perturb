@@ -3,6 +3,7 @@ Application.cpp
 Part.cpp
 #PartFactory.cpp
 PartInterface.cpp
+ApplicationController.cpp
 )
 
 set(PERTURB_PUBLIC_HEADERS

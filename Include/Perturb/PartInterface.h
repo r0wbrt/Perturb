@@ -32,9 +32,7 @@
  *
  * TODO Simplify the method of message input passing. Allow for an input to 
  * receive many types with ease. Eg. int, float, double etc.
- * TODO Fix duplication of code in Message sending, fix WriteToOutput Api
  * TODO Need a way to get globally unique tokens.
- * 
  *
  */
 
@@ -129,10 +127,11 @@ class PartInterface : public Theron::Actor
     this->input_name_list_.push_back(ioentry);
     /*Wrap the call back in a lambda function so the callback can be stored
       as a generic function with predictable type signature.*/
-    this->input_map_[type_hash][this->HashName(name)] = [callback, owner] (const void * p)
+    this->input_map_[type_hash][this->HashName(name)] = [callback, owner] (void * p)
     -> void
     {
-      owner->callback((T*)p);
+      T& payload = *(T*)(p);
+      (owner->*callback)(payload);
     };
     
     return true;
@@ -398,6 +397,9 @@ class PartInterface : public Theron::Actor
   bool Initialize(Part * part, const Perturb::Address log_address);
   static NameHash HashName(std::string name);
   
+  /*TODO, Remaining core functions...*/
+  
+  int NewToken();
   int Quit(); /*Destructs this actor*/
   int Die(); /*Calling this will kill the entire application*/
   int Die(const std::string message);
@@ -435,8 +437,9 @@ class PartInterface : public Theron::Actor
             const NameHash input_hash, TypeHash type);
  
                   
+  /*END remaining core functions*/
   
-  /*TODO Finish these two functions for version 2.0.0*/
+  
   int IssueReset(Perturb::Address); 
   int IssueNewToken(int Token, Perturb::Address); 
  
@@ -450,7 +453,7 @@ class PartInterface : public Theron::Actor
   void InputMessageHandler(const PartInterfaceInputMessage<T>& message, const Perturb::Address from)
   {
     static TypeHash type_hash = typeid(T).hash_code();
-    if(message.type_hash != type_hash)
+    if(message.type != type_hash)
     {
       this->LogError("Message routed to wrong input handler.");
       return ;

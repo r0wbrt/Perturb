@@ -31,15 +31,17 @@ class ApplicationController : public Perturb::Part
 {
     
   public:
-  bool Initialize();
+  virtual bool Initialize() {};
+  bool __internal_controller_init(void * p);
+  void * pointer_;
   protected:
     void Exit();
-    
+
     void RequestExitRouter(const int& k);
-    void Entry(void * p);
-    
+    void Entry(const int& p);
+    void SetPointer(void *p);
     virtual void RequestExit();
-    virtual void Main(void * p) = 0;
+    virtual void Main(void * p) {};
     
 };
 

@@ -35,18 +35,22 @@ namespace Perturb
     if(address != this->application_controller_interface_->GetAddress())
       return ;
       
+    if(message.input_hash != 0 && message.output_hash != 0)
+      return ;
+      
     this->has_quit_ = true;
   }
 
   void Application::OutputCatcher(const PartInterfaceInputMessage<std::string>& message, 
         const Perturb::Address address)
   {
+
     if(message.input_hash == PartInterface::HashName("Application::stdout"))
     {
       while(Application::stdout_lock_.test_and_set(std::memory_order_acquire))
           {}
           
-      std::cout << address.AsString() << ": " << message.payload << std::endl;
+      std::cout << "Output from " << address.AsString() << ": " << message.payload << std::endl;
       
       Application::stdout_lock_.clear(std::memory_order_release);
    }
@@ -55,16 +59,15 @@ namespace Perturb
       while(Application::stderror_lock_.test_and_set(std::memory_order_acquire))
           {}
           
-      std::cerr << address.AsString() << ": " << message.payload << std::endl;
+      std::cerr <<"Error from " << address.AsString() << ": " << message.payload << std::endl;
       
       Application::stderror_lock_.clear(std::memory_order_release);
    }    
   }
   void Application::Lock()
   {
-  
-  while (this->lock_.test_and_set(std::memory_order_acquire))
-             {}
+    while (this->lock_.test_and_set(std::memory_order_acquire))
+    {}
   }
   void Application::Unlock()
   {
@@ -129,6 +132,7 @@ namespace Perturb
     
     controller->__internal_set_application(this);
     controller->__internal_initialize(pi);
+    controller->__internal_controller_init(p);
     controller->__internal_set_check_token(0);
     controller->CheckTokens(false);
     controller->Initialize();
@@ -136,14 +140,15 @@ namespace Perturb
     this->application_controller_ = controller;
     this->application_controller_interface_ = pi;
     
-    PartInterfaceInputMessage<void *> message;
-    message.type = typeid(void *).hash_code();
+    PartInterfaceInputMessage<int> message;
+    message.type = typeid(int).hash_code();
     message.input_hash = PartInterface::HashName("ApplicationController::Main");
     message.output_hash = PartInterface::HashName("Application::Execute");
-    message.payload = p;
+    message.payload = 0;
     message.token = 0;
     this->framework_.Send(message, this->receiver_.GetAddress(), 
-                              pi->GetAddress());
+                           pi->GetAddress());
+    this->has_quit_ = false;
     
     return pi->GetAddress();
   }
@@ -169,6 +174,10 @@ namespace Perturb
       this->receiver_.Wait();
       
     return true;
+  }
+  Perturb::Address Application::GetAddress()
+  {
+    return this->receiver_.GetAddress();
   }
 
 };

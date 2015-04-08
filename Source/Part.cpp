@@ -70,7 +70,7 @@ namespace Perturb
   
   PartInterface& Part::Interface()
   {
-    return *this->interface_;
+    return (*this->interface_);
   }
   
   Perturb::Application& Part::App()

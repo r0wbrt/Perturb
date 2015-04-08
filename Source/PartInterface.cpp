@@ -25,12 +25,12 @@ PartInterface::PartInterface(Theron::Framework& framework) : Actor(framework)
 void PartInterface::Log(const std::string& out_message)
 {
   static NameHash name = this->HashName("Application::stdout");
-  this->SendToInput<std::string>(out_message, name, 0, 0, this->log_output_address_);
+  this->SendToInput<std::string>(out_message, 0, name, 0, this->log_output_address_);
 }
 void PartInterface::LogError(const std::string& out_message)
 {
   static NameHash name = this->HashName("Application::stderror");
-  this->SendToInput(out_message, name, 0, 0, this->log_output_address_);
+  this->SendToInput(out_message, 0, name, 0, this->log_output_address_);
 }
 
 bool PartInterface::Initialize(Part * part, const Perturb::Address log_address)

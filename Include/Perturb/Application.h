@@ -57,6 +57,7 @@ class Application
   bool RequestQuit();
   /*Returns after the Application Controller has shutdown Application*/
   bool WaitForQuit();
+  Perturb::Address GetAddress();
 };
 
 };
