@@ -1,11 +1,8 @@
-==Dormant==
-Active development of Version 0.2 has ceased and work has moved on to 0.3. The goal of version 0.3 
-is to use C++ operators like << to allow clear expression of data movement. Additionally, 
-version 0.3 ends reliance on the Theron code base and replaces it with my own custom code and thread 
-scheduling implementation. For now, updates to the Version 0.3 branch will not be pushed, but 
-expect the first alpha version of 0.3 to be released when a working build system and test 
-framework is put into place. 
+This project is currently experimental, for the most latest code see branch 'Version.0.2.00'
 
-This project is currently experimental, for latest development see branch 'Version.0.2.00'
+==Dormant==
+Active development of Version 0.2 has ceased and work has moved on to 0.3. The goal of version 0.3 is to use C++ operators like << to allow clear expression of data movement. Additionally, version 0.3 ends reliance on the Theron code base and replaces it with my own custom code and thread scheduling implementation. For now, updates to the Version 0.3 branch will not be pushed, but expect the first alpha version of 0.3 to be released when a working build system and test framework is put into place. 
+
+
 
 
